@@ -31,5 +31,5 @@ Build and deploy:
 kustomize build | kubectl apply -f -
 ```
 
-A ConfigMap called `ipxe_dot_efi_dot_gz` will be created containing a gzipped
+A ConfigMap called `ipxe-dot-efi-dot-gz` will be created containing a gzipped
 customized build of `ipxe.efi`.
