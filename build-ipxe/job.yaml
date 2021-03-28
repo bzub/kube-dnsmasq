@@ -1,0 +1,59 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: build-ipxe
+spec:
+  template:
+    spec:
+      serviceAccountName: build-ipxe
+      restartPolicy: Never
+      initContainers:
+      - name: build-ipxe
+        image: ghcr.io/bzub/build-ipxe
+        command:
+        - sh
+        - -ec
+        - |-
+          make_args="${MAKE_ARGS}"
+          if [ -z "${make_args}" ]; then
+            echo "[ERROR] MAKE_ARGS not set."
+            exit 1
+          fi
+
+          echo "${EMBED_SCRIPT}" > "/tmp/embed.ipxe"
+
+          make ${make_args} EMBED="/tmp/embed.ipxe"
+
+          for arg in ${make_args}; do
+            echo "${arg}"
+            if echo "${arg}" | grep -qF '='; then
+              continue
+            fi
+            cp "${arg}" /artifacts
+          done
+          gzip /artifacts/*
+          ls /artifacts
+        envFrom:
+        - configMapRef:
+            name: build-ipxe
+            optional: false
+        volumeMounts:
+        - name: artifacts
+          mountPath: /artifacts
+      containers:
+      - name: create-configmaps
+        workingDir: /artifacts
+        image: docker.io/bitnami/kubectl
+        command:
+        - sh
+        - -ec
+        - |-
+          for file in *; do
+            cm_name="$(echo "${file}" | sed -e 's/[\.]/-dot-/g')"
+            kubectl create configmap "${cm_name}" --from-file="${file}"
+          done
+        volumeMounts:
+        - name: artifacts
+          mountPath: /artifacts
+      volumes:
+      - name: artifacts

@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- job.yaml
+- role.yaml
+- rolebinding.yaml
+- serviceaccount.yaml
+commonLabels:
+  app.kubernetes.io/component: build-ipxe
+images:
+- name: ghcr.io/bzub/build-ipxe
+  digest: sha256:121787d43b8b71c7c3dfe569d428c69e2dfd250561105d15dc5c8899c7d422ec
+configMapGenerator:
+- name: build-ipxe
+  literals:
+  - MAKE_ARGS=bin/ipxe.iso bin/ipxe.usb bin/ipxe.pxe bin/undionly.kpxe bin-x86_64-efi/ipxe.efi
+  - |-
+    EMBED_SCRIPT=
+    #!ipxe
+    autoboot
