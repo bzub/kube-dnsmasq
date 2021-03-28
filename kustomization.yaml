@@ -1,0 +1,37 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- deployment.yaml
+commonLabels:
+  app.kubernetes.io/name: dnsmasq
+  app.kubernetes.io/component: server
+images:
+- name: quay.io/poseidon/dnsmasq
+  digest: sha256:78209e5573a9ba809b9e4fc1f6a92bd76dc2c0f476343cf022a06d7a6abf7c97
+configMapGenerator:
+- name: dnsmasq
+  literals:
+  - |-
+    dnsmasq.conf=
+    no-daemon
+    enable-tftp
+    tftp-root=/var/lib/tftpboot
+
+    # Legacy PXE
+    dhcp-match=set:bios,option:client-arch,0
+    dhcp-boot=tag:bios,undionly.kpxe
+
+    # UEFI
+    dhcp-match=set:efi32,option:client-arch,6
+    dhcp-boot=tag:efi32,ipxe.efi
+    dhcp-match=set:efibc,option:client-arch,7
+    dhcp-boot=tag:efibc,ipxe.efi
+    dhcp-match=set:efi64,option:client-arch,9
+    dhcp-boot=tag:efi64,ipxe.efi
+
+    # iPXE
+    dhcp-userclass=set:ipxe,iPXE
+    dhcp-boot=tag:ipxe,http://bootserver.example.com:8080/boot.ipxe
+
+    log-queries
+    log-dhcp

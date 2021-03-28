@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dnsmasq
+spec:
+  template:
+    spec:
+      hostNetwork: true
+      initContainers:
+      - name: custom-assets
+        image: docker.io/library/alpine
+        workingDir: /assets
+        command:
+        - sh
+        - -ec
+        - |-
+          ls /assets
+          if [ -z "$(ls /assets | grep -E '\.gz$')" ]; then
+            echo "[INFO] No custom assets found."
+            exit 0
+          fi
+
+          for file in /assets/*.gz; do
+            out="/var/lib/tftpboot/custom/$(basename "${file}" .gz)"
+            gunzip -c "${file}" > "${out}"
+          done
+        volumeMounts:
+        - name: tftpboot-custom
+          mountPath: /var/lib/tftpboot/custom
+      containers:
+      - image: quay.io/poseidon/dnsmasq
+        name: dnsmasq
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        volumeMounts:
+        - name: config
+          mountPath: /etc/dnsmasq.conf
+          subPath: dnsmasq.conf
+        - name: tftpboot-custom
+          mountPath: /var/lib/tftpboot/custom
+      volumes:
+      - name: config
+        configMap:
+          name: dnsmasq
+      - name: tftpboot-custom
