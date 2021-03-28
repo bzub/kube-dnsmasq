@@ -20,3 +20,4 @@ RUN set -xe \
 COPY --from=git-clone /ipxe /usr/src/ipxe
 WORKDIR /usr/src/ipxe/src
 ENTRYPOINT /usr/bin/make
+LABEL org.opencontainers.image.source=https://github.com/bzub/kube-dnsmasq
