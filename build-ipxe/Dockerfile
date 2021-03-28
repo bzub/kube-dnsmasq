@@ -9,6 +9,7 @@ RUN set -xe \
   && apk --update --no-cache add --virtual build-dependencies \
     binutils \
     gcc \
+    git \
     make \
     musl \
     musl-dev \
